@@ -3,7 +3,7 @@ from collections import defaultdict
 
 class Agent:
 
-    def __init__(self, nA=6, eps=None):
+    def __init__(self, nA=6, eps=None, alpha = 0.01, gamma = 1.0):
         """ Initialize agent.
 
         Params
@@ -13,7 +13,6 @@ class Agent:
         self.nA = nA
         self.Q = defaultdict(lambda: np.zeros(self.nA))
         self.eps = eps
-        #self.i_episode = i_episode
 
     def select_action(self, state, i_episode):
         """ Given the state, select an action according to epsilon greedy policy
@@ -28,15 +27,15 @@ class Agent:
         """
         # epsilon greedy probs
         epsilon = 1.0 / i_episode
-        if eps is not None:
-            epsilon = eps
+        if self.eps is not None:
+            epsilon = self.eps
         policy_s = np.ones(self.nA) * epsilon / self.nA
-        policy_s[np.argmax(state)] = 1 - epsilon + (epsilon / self.nA)
-        action = np.random.choice(na.arange(self.nA), p = policy_s)
+        policy_s[np.argmax(self.Q[state])] = 1 - epsilon + (epsilon / self.nA)
+        action = np.random.choice(np.arange(self.nA), p = policy_s)
         
         return action
 
-    def step(self, state, action, reward, next_state, done):
+    def step(self, state, action, reward, next_state, done, gamma=0.95, alpha=0.005):
         """ Update the agent's knowledge, using the most recently sampled tuple.
 
         Params
@@ -47,4 +46,6 @@ class Agent:
         - next_state: the current state of the environment
         - done: whether the episode is complete (True or False)
         """
-        self.Q[state][action] += 1
+        Qs_next = np.max(self.Q[next_state])
+        update = self.Q[state][action] + (alpha * (reward + (gamma * Qs_next) - self.Q[state][action]))
+        self.Q[state][action] += update
